@@ -187,7 +187,7 @@ async function launchBrowserForUser(username, password) {
       console.error(`Page error: ${error.message}`);
     });
     page.on("error", async (error) => {
-      console.error(`Error: ${error.message}`);
+      // console.error(`Error: ${error.message}`);
       // 检查是否是 localStorage 的访问权限错误
       if (
         error.message.includes(
@@ -200,7 +200,7 @@ async function launchBrowserForUser(username, password) {
       }
     });
     page.on("console", async (msg) => {
-      console.log("PAGE LOG:", msg.text());
+      // console.log("PAGE LOG:", msg.text());
       // 使用一个标志变量来检测是否已经刷新过页面
       if (
         !page._isReloaded &&
@@ -257,7 +257,7 @@ async function launchBrowserForUser(username, password) {
     });
     // 如果是Linuxdo，就导航到我的帖子，但我感觉这里写没什么用，因为外部脚本已经定义好了，不对，这里不会点击按钮，所以不会跳转，需要手动跳转
     if (loginUrl == "https://linux.do") {
-      await page.goto("https://linux.do/t/topic/13716/400", {
+      await page.goto("https://linux.do/t/topic/13716/630", {
         waitUntil: "domcontentloaded",
       });
     } else if (loginUrl == "https://meta.appinn.net") {

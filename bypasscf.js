@@ -187,7 +187,7 @@ async function launchBrowserForUser(username, password) {
       console.error(`Page error: ${error.message}`);
     });
     page.on("error", async (error) => {
-      console.error(`Error: ${error.message}`);
+      // console.error(`Error: ${error.message}`);
       // 检查是否是 localStorage 的访问权限错误
       if (
         error.message.includes(
@@ -200,7 +200,7 @@ async function launchBrowserForUser(username, password) {
       }
     });
     page.on("console", async (msg) => {
-      console.log("PAGE LOG:", msg.text());
+      // console.log("PAGE LOG:", msg.text());
       // 使用一个标志变量来检测是否已经刷新过页面
       if (
         !page._isReloaded &&
@@ -229,6 +229,7 @@ async function launchBrowserForUser(username, password) {
       console.log("找到avatarImg，登录成功");
     } else {
       console.log("未找到avatarImg，登录失败");
+      throw new Error("登录失败");
     }
 
     //真正执行阅读脚本
@@ -257,7 +258,7 @@ async function launchBrowserForUser(username, password) {
     });
     // 如果是Linuxdo，就导航到我的帖子，但我感觉这里写没什么用，因为外部脚本已经定义好了，不对，这里不会点击按钮，所以不会跳转，需要手动跳转
     if (loginUrl == "https://linux.do") {
-      await page.goto("https://linux.do/t/topic/13716/400", {
+      await page.goto("https://linux.do/t/topic/13716/630", {
         waitUntil: "domcontentloaded",
       });
     } else if (loginUrl == "https://meta.appinn.net") {
@@ -282,7 +283,7 @@ async function launchBrowserForUser(username, password) {
     return { browser }; // 错误时仍然返回 browser
   }
 }
-async function login(page, username, password) {
+async function login(page, username, password, retryCount = 3) {
   // 使用XPath查询找到包含"登录"或"login"文本的按钮
   let loginButtonFound = await page.evaluate(() => {
     let loginButton = Array.from(document.querySelectorAll("button")).find(
@@ -348,10 +349,17 @@ async function login(page, username, password) {
       page.click("#login-button"), // 点击登录按钮触发跳转
     ]); //注意如果登录失败，这里会一直等待跳转，导致脚本执行失败 这点四个月之前你就发现了结果今天又遇到（有个用户遇到了https://linux.do/t/topic/169209/82），但是你没有在这个报错你提示我8.5
   } catch (error) {
-    throw new Error(
-      `Navigation timed out in login.请检查用户名密码是否正确(注意密码中是否有特殊字符,需要外面加上双引号指明这是字符串，如果密码里面有双引号则需要转义)(注意GitHub action不需要增加处理,也不需要加引号),失败用户 ${username}, 密码 $错误信息：,
+    console.error(`Error during login: ${error.message}`);
+    if (retryCount > 0) {
+      console.log("Retrying login...");
+      await delayClick(2000); // 增加重试前的延迟
+      return await login(page, username, password, retryCount - 1);
+    } else {
+      throw new Error(
+        `Navigation timed out in login.请检查用户名密码是否正确(注意密码中是否有特殊字符,需要外面加上双引号指明这是字符串，如果密码里面有双引号则需要转义)(注意GitHub action不需要增加处理,也不需要加引号),失败用户 ${username}, 密码 $错误信息：,
       ${error}`
-    ); //{password}
+      ); //{password}
+    }
   }
   await delayClick(1000);
 }
